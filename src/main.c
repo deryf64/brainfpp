@@ -68,6 +68,7 @@ int run(char *line, size_t default_size, int debug) {
         mem_size = new_size;
         break;
       }
+      case '#': print_mem(mem, mem_size, ptr); putchar('\n'); break;
     }
 
     if (ptr >= mem_size) {
