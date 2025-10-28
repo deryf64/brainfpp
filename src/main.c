@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 void print_mem(unsigned char *mem, size_t mem_size, size_t ptr) {
   printf("[ ");
@@ -27,6 +28,13 @@ int run(char *line, size_t default_size, int debug) {
     char c = line[i];
 
     switch (c) {
+      case ' ': continue;
+      case '\t': continue;
+      case '#':
+        i++;
+        while (i < code_len && line[i] != '#') i++;
+        if (i < code_len && line[i] == '#') i++;
+        continue;
       case '+': mem[ptr] += 1; break;
       case '-': mem[ptr] -= 1; break;
       case '>': ptr += 1; break;
@@ -68,7 +76,7 @@ int run(char *line, size_t default_size, int debug) {
         mem_size = new_size;
         break;
       }
-      case '#': print_mem(mem, mem_size, ptr); putchar('\n'); break;
+      case '@': print_mem(mem, mem_size, ptr); putchar('\n'); break;
     }
 
     if (ptr >= mem_size) {
@@ -90,13 +98,72 @@ cleanup:
 }
 
 int main(int argc, char *argv[]) {
-  size_t mem_size = atoi(argv[1]);
-  char *code = argv[2];
+  int opt;
+  int D_flag = 0; // -D Debug
+  int m_flag = 0; // -m Memory
+  char *m_value = NULL;
+  int t_flag = 0; // -t Text
+  char *t_value = NULL;
+  int f_flag = 0; // -f File
+  char *f_value = NULL;
 
-  int debug = 0;
-  if (argv[3]) {
-    debug = 1;
+  while ((opt = getopt(argc, argv, "Dm:t:f:")) != -1) {
+    switch (opt) {
+      case 'D':
+        D_flag = 1;
+        break;
+      case 'm':
+        m_flag = 1;
+        m_value = optarg;
+        break;
+      case 't':
+        t_flag = 1;
+        t_value = optarg;
+        break;
+      case 'f':
+        f_flag = 1;
+        f_value = optarg;
+        break;
+      case '?':
+        fprintf(stderr, "Unknown option: -%c\n", optopt);
+        return 1;
+      default:
+        return 1;
+    }
   }
 
-  return run(code, mem_size, debug);
+  size_t mem_size = atoi(m_value);
+
+  if (t_flag && f_flag) {
+    fprintf(stderr, "-t -f conflict");
+    return 1;
+  }
+
+  char *code;
+  if (t_flag) {
+    code = t_value;
+  } else {
+    FILE *file = fopen(f_value, "r");
+    if (!file) {
+      perror("File open error");
+      return 1;
+    }
+
+    fseek(file, 0, SEEK_END);
+    long size = ftell(file);
+    rewind(file);
+
+    code = malloc(size + 1);
+    if (!code) {
+      fclose(file);
+      fprintf(stderr, "Memory allocation error\n");
+      return 1;
+    }
+
+    fread(code, 1, size, file);
+    code[size] = '\0';
+    fclose(file);
+  }
+
+  return run(code, mem_size, D_flag);
 }
