@@ -1,12 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-
-void setzeros(void* s, size_t n) {
-  unsigned char* p = (unsigned char*)s;
-  while (n--) {
-    *p++ = (unsigned char)(0);
-  }
-}
+#include <string.h>
 
 void print_mem(unsigned char *mem, size_t mem_size, size_t ptr) {
   printf("[ ");
@@ -20,16 +14,14 @@ void print_mem(unsigned char *mem, size_t mem_size, size_t ptr) {
   printf("]");
 }
 
-int run(char *line, int debug) {
-  unsigned char *mem = calloc(1, sizeof(unsigned char));
+int run(char *line, size_t default_size, int debug) {
+  unsigned char *mem = calloc(default_size, sizeof(unsigned char));
   if (!mem) return 1;
 
   size_t ptr = 0;
-  size_t mem_size = 1;
+  size_t mem_size = default_size;
   int status = 0;
-
-  size_t code_len;
-  for (code_len = 0; line[code_len] != '\0'; ++code_len);
+  size_t code_len = strlen(line);
 
   for (size_t i = 0; i < code_len; i++) {
     char c = line[i];
@@ -71,7 +63,7 @@ int run(char *line, int debug) {
           status = 1;
           goto cleanup;
         }
-        setzeros(new_mem + mem_size, new_size - mem_size);
+        memset(new_mem + mem_size, 0, new_size - mem_size);
         mem = new_mem;
         mem_size = new_size;
         break;
@@ -97,11 +89,13 @@ cleanup:
 }
 
 int main(int argc, char *argv[]) {
-  char *code = argv[1];
+  size_t mem_size = atoi(argv[1]);
+  char *code = argv[2];
+
   int debug = 0;
-  if (argv[2]) {
+  if (argv[3]) {
     debug = 1;
   }
 
-  return run(code, debug);
+  return run(code, mem_size, debug);
 }
