@@ -1,7 +1,12 @@
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+
+void setzeros(void* s, size_t n) {
+  unsigned char* p = (unsigned char*)s;
+  while (n--) {
+    *p++ = (unsigned char)(0);
+  }
+}
 
 void print_mem(unsigned char *mem, size_t mem_size, size_t ptr) {
   printf("[ ");
@@ -22,7 +27,9 @@ int run(char *line, int debug) {
   size_t ptr = 0;
   size_t mem_size = 1;
   int status = 0;
-  size_t code_len = strlen(line);
+
+  size_t code_len;
+  for (code_len = 0; line[code_len] != '\0'; ++code_len);
 
   for (size_t i = 0; i < code_len; i++) {
     char c = line[i];
@@ -64,7 +71,7 @@ int run(char *line, int debug) {
           status = 1;
           goto cleanup;
         }
-        memset(new_mem + mem_size, 0, new_size - mem_size);
+        setzeros(new_mem + mem_size, new_size - mem_size);
         mem = new_mem;
         mem_size = new_size;
         break;
