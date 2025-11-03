@@ -37,6 +37,7 @@ int run(char *line, size_t default_size, int debug) {
         continue;
       case '+': mem[ptr] += 1; break;
       case '-': mem[ptr] -= 1; break;
+      case '@': mem[ptr] = 0; break;
       case '>': ptr += 1; break;
       case '<': ptr -= 1; break;
       case '[':
@@ -76,7 +77,7 @@ int run(char *line, size_t default_size, int debug) {
         mem_size = new_size;
         break;
       }
-      case '@': print_mem(mem, mem_size, ptr); putchar('\n'); break;
+      case '"': print_mem(mem, mem_size, ptr); putchar('\n'); break;
     }
 
     if (ptr >= mem_size) {
